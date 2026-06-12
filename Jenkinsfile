@@ -27,7 +27,8 @@ pipeline {
                         -p 5000:5000 \
                         -v /tmp/app-logs:/app/logs \
                         ${IMAGE_UNSTABLE}
-                    sleep 30
+                    echo "Waiting for app to start..."
+                    sleep 20
                 '''
             }
         }
@@ -37,9 +38,10 @@ pipeline {
                 sh '''
                     docker run --rm \
                         --network host \
-                        -e BASE_URL=${BASE_URL} \
+                        -e BASE_URL=http://localhost:5000 \
+                        -v ${WORKSPACE}/tests:/tests \
                         ${IMAGE_UNSTABLE} \
-                        sh -c "pip install pytest requests --quiet && pytest tests/test_api.py -v"
+                        sh -c "pip install pytest requests -q && pytest /tests/test_api.py -v"
                 '''
             }
         }
@@ -49,12 +51,11 @@ pipeline {
                 sh '''
                     docker run --rm \
                         --network host \
-                        -e BASE_URL=${BASE_URL} \
-                        selenium/standalone-chrome:latest \
-                        bash -c "
-                            pip install selenium requests --quiet &&
-                            python -m pytest /tests/test_ui.py -v
-                        " || true
+                        -e BASE_URL=http://localhost:5000 \
+                        -e DISPLAY=:99 \
+                        -v ${WORKSPACE}/tests:/tests \
+                        selenium/standalone-chrome:4.21.0 \
+                        bash -c "pip install selenium requests pytest -q && pytest /tests/test_ui.py -v" || true
                 '''
             }
         }
@@ -69,15 +70,14 @@ pipeline {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                        docker build -t ${IMAGE_UNSTABLE} .
                         docker push ${IMAGE_UNSTABLE}
 
                         git fetch origin stable-fallback
-                        git checkout stable-fallback -- app.py
+                        git checkout origin/stable-fallback -- app.py
                         docker build -t ${IMAGE_STABLE} .
                         docker push ${IMAGE_STABLE}
 
-                        git checkout main -- app.py
+                        git checkout HEAD -- app.py
                     '''
                 }
             }
