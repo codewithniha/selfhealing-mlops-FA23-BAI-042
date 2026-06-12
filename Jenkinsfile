@@ -41,7 +41,7 @@ pipeline {
                         -e BASE_URL=http://localhost:5000 \
                         -v ${WORKSPACE}/tests:/tests \
                         ${IMAGE_UNSTABLE} \
-                        sh -c "pip install pytest requests -q && pytest /tests/test_api.py -v"
+                        sh -c "pip3 install pytest requests -q && pytest /tests/test_api.py -v"
                 '''
             }
         }
