@@ -5,7 +5,6 @@ pipeline {
         IMAGE_UNSTABLE  = "${DOCKER_HUB_USER}/sentiment-api:unstable"
         IMAGE_STABLE    = "${DOCKER_HUB_USER}/sentiment-api:stable"
         CONTAINER_NAME  = "sentiment-test-container"
-        EC2_IP          = "32.198.95.64"
     }
     stages {
         stage('Fetch') {
@@ -23,8 +22,11 @@ pipeline {
                         -p 5000:5000 \
                         -v /tmp/app-logs:/app/logs \
                         ${IMAGE_UNSTABLE}
-                    echo "Waiting for app to start..."
-                    sleep 20
+                    echo "Waiting for DistilBERT to load..."
+                    sleep 60
+                    # Verify app is actually running
+                    curl -s http://localhost:5000/health || sleep 30
+                    echo "App is ready!"
                 '''
             }
         }
@@ -36,7 +38,8 @@ pipeline {
                         -e BASE_URL=http://localhost:5000 \
                         -v ${WORKSPACE}/tests:/tests \
                         ${IMAGE_UNSTABLE} \
-                        sh -c "pip3 install pytest requests -q && pytest /tests/test_api.py -v"
+                        sh -c "pip3 install pytest requests -q && \
+                               pytest /tests/test_api.py -v"
                 '''
             }
         }
