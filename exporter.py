@@ -2,8 +2,6 @@ import time
 import requests
 from prometheus_client import start_http_server, Gauge
 
-#checking jenins
-
 # This is the exact metric name the grading script checks
 CONFIDENCE_GAUGE = Gauge(
     'prediction_confidence_score',
