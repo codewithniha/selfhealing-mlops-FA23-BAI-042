@@ -44,20 +44,19 @@ pipeline {
             }
         }
         stage('UI Test') {
-            steps {
-                sh '''
-                    docker run --rm \
-                        --network host \
-                        -e BASE_URL=http://localhost:5000 \
-                        -v ${WORKSPACE}/tests:/tests \
-                        python:3.10-slim \
-                        bash -c "apt-get update -qq && \
-                            apt-get install -y -qq chromium chromium-driver && \
-                            pip install selenium pytest requests -q && \
-                            pytest /tests/test_ui.py -v" || true
-                '''
-            }
-        }
+    steps {
+        sh '''
+            docker run --rm \
+                -e BASE_URL=http://32.198.95.64:32500 \
+                -v ${WORKSPACE}/tests:/tests \
+                python:3.10-slim \
+                bash -c "apt-get update -qq && \
+                    apt-get install -y -qq chromium chromium-driver && \
+                    pip install selenium pytest requests -q && \
+                    pytest /tests/test_ui.py -v" || true
+        '''
+    }
+}
         stage('Build and Push') {
             steps {
                 withCredentials([usernamePassword(
