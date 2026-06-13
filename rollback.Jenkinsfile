@@ -7,12 +7,15 @@ pipeline {
                 sh '''
                     export KUBECONFIG=/var/lib/jenkins/.kube/config
 
-                    # Scale green back up first
-                    kubectl scale deployment sentiment-green-deployment --replicas=2
+                    # Scale green back up
+                    kubectl scale deployment sentiment-green-deployment \
+                        --replicas=2
                     sleep 10
 
-                    # Wait for green pods ready
-                    kubectl rollout status deployment/sentiment-green-deployment --timeout=60s
+                    # Wait for green pods
+                    kubectl rollout status \
+                        deployment/sentiment-green-deployment \
+                        --timeout=60s
 
                     # Patch service to green
                     kubectl patch service sentiment-api-service \
@@ -25,7 +28,7 @@ pipeline {
                     # Restart port-forward
                     sudo /home/ubuntu/portforward-manager.sh
                     sleep 5
-                    echo "Port-forward restarted"
+                    echo "Done"
                 '''
             }
         }
@@ -33,7 +36,10 @@ pipeline {
 
     post {
         success {
-            echo "Self-healing complete — stable-v0-8639 is now serving traffic"
+            echo "Self-healing complete — stable-v0-8639 is now serving"
+        }
+        failure {
+            echo "Rollback failed"
         }
     }
 }
