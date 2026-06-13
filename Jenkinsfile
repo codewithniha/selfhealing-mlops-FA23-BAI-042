@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_HUB_USER = "niha1020"
         IMAGE_UNSTABLE  = "${DOCKER_HUB_USER}/sentiment-api:unstable"
@@ -8,15 +7,12 @@ pipeline {
         CONTAINER_NAME  = "sentiment-test-container"
         BASE_URL        = "http://localhost:5000"
     }
-
     stages {
-
         stage('Fetch') {
             steps {
                 checkout scm
             }
         }
-
         stage('Build and Run') {
             steps {
                 sh '''
@@ -32,7 +28,6 @@ pipeline {
                 '''
             }
         }
-
         stage('Unit Test') {
             steps {
                 sh '''
@@ -45,7 +40,6 @@ pipeline {
                 '''
             }
         }
-
         stage('UI Test') {
             steps {
                 sh '''
@@ -55,11 +49,10 @@ pipeline {
                         -e DISPLAY=:99 \
                         -v ${WORKSPACE}/tests:/tests \
                         selenium/standalone-chrome:4.21.0 \
-                        bash -c "pip install selenium requests pytest -q && pytest /tests/test_ui.py -v" || true
+                        bash -c "pip3 install selenium requests pytest -q && pytest /tests/test_ui.py -v" || true
                 '''
             }
         }
-
         stage('Build and Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -69,20 +62,16 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
                         docker push ${IMAGE_UNSTABLE}
-
                         git fetch origin stable-fallback
                         git checkout origin/stable-fallback -- app.py
                         docker build -t ${IMAGE_STABLE} .
                         docker push ${IMAGE_STABLE}
-
                         git checkout HEAD -- app.py
                     '''
                 }
             }
         }
-
         stage('Deploy to Minikube') {
             steps {
                 sh '''
@@ -95,9 +84,7 @@ pipeline {
                 '''
             }
         }
-
     }
-
     post {
         always {
             sh 'docker rm -f ${CONTAINER_NAME} || true'
