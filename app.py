@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify, render_template
 from transformers import pipeline
 import time, random, os
 #checking pipeline whether it work or not
-#adding further lines
-#cheking again again agin
+
+
 app = Flask(__name__)
 
 classifier = pipeline(
