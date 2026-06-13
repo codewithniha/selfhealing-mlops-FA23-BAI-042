@@ -3,10 +3,13 @@ import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import shutil
 
-BASE_URL = os.environ.get("BASE_URL", "http://localhost:5000")
+# Use EC2 public IP so Chrome container can reach the app
+BASE_URL = os.environ.get("BASE_URL", "http://32.198.95.64:32500")
 
 def test_frontend_sentiment():
     options = Options()
@@ -14,15 +17,12 @@ def test_frontend_sentiment():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--remote-debugging-port=9222")
 
-    # Use chromium-driver if available
-    from selenium.webdriver.chrome.service import Service
-    import shutil
-    chromedriver = shutil.which("chromedriver") or \
-                   shutil.which("chromium-driver") or \
-                   "/usr/bin/chromedriver"
-    
+    chromedriver = (
+        shutil.which("chromedriver") or
+        shutil.which("chromium-driver") or
+        "/usr/bin/chromedriver"
+    )
     service = Service(executable_path=chromedriver)
     driver = webdriver.Chrome(service=service, options=options)
 
@@ -44,8 +44,9 @@ def test_frontend_sentiment():
         submit_btn.click()
 
         WebDriverWait(driver, 15).until(
-            lambda d: len(d.find_element(
-                By.ID, "result-output").text.strip()) > 0
+            lambda d: len(
+                d.find_element(By.ID, "result-output").text.strip()
+            ) > 0
         )
 
         result_text = driver.find_element(By.ID, "result-output").text
