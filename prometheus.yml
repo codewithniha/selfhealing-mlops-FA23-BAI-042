@@ -9,7 +9,7 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - alertmanager:9093
+            - host.docker.internal:9093
 
 scrape_configs:
   - job_name: sentiment-ml-exporter
