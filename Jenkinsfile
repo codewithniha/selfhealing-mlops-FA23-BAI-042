@@ -46,10 +46,9 @@ pipeline {
                     docker run --rm \
                         --network host \
                         -e BASE_URL=http://localhost:5000 \
-                        -e DISPLAY=:99 \
                         -v ${WORKSPACE}/tests:/tests \
-                        selenium/standalone-chrome:4.21.0 \
-                        bash -c "pip3 install selenium requests pytest -q && pytest /tests/test_ui.py -v" || true
+                        python:3.10-slim \
+                        bash -c "apt-get update -qq && apt-get install -y -qq chromium chromium-driver && pip install selenium pytest requests -q && pytest /tests/test_ui.py -v" || true
                 '''
             }
         }
