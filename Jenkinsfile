@@ -5,7 +5,7 @@ pipeline {
         IMAGE_UNSTABLE  = "${DOCKER_HUB_USER}/sentiment-api:unstable"
         IMAGE_STABLE    = "${DOCKER_HUB_USER}/sentiment-api:stable"
         CONTAINER_NAME  = "sentiment-test-container"
-        BASE_URL        = "http://localhost:5000"
+        EC2_IP          = "32.198.95.64"
     }
     stages {
         stage('Fetch') {
@@ -48,7 +48,10 @@ pipeline {
                         -e BASE_URL=http://localhost:5000 \
                         -v ${WORKSPACE}/tests:/tests \
                         python:3.10-slim \
-                        bash -c "apt-get update -qq && apt-get install -y -qq chromium chromium-driver && pip install selenium pytest requests -q && pytest /tests/test_ui.py -v" || true
+                        bash -c "apt-get update -qq && \
+                            apt-get install -y -qq chromium chromium-driver && \
+                            pip install selenium pytest requests -q && \
+                            pytest /tests/test_ui.py -v" || true
                 '''
             }
         }
@@ -60,7 +63,8 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo "$DOCKER_PASS" | \
+                            docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${IMAGE_UNSTABLE}
                         git fetch origin stable-fallback
                         git checkout origin/stable-fallback -- app.py
@@ -79,7 +83,9 @@ pipeline {
                     kubectl apply -f k8s/blue-deployment.yaml
                     kubectl apply -f k8s/green-deployment.yaml
                     kubectl apply -f k8s/service.yaml
-                    kubectl rollout status deployment/sentiment-blue-deployment --timeout=120s
+                    kubectl rollout status \
+                        deployment/sentiment-blue-deployment \
+                        --timeout=120s
                 '''
             }
         }

@@ -14,30 +14,44 @@ def test_frontend_sentiment():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
+    options.add_argument("--remote-debugging-port=9222")
 
-    driver = webdriver.Chrome(options=options)
+    # Use chromium-driver if available
+    from selenium.webdriver.chrome.service import Service
+    import shutil
+    chromedriver = shutil.which("chromedriver") or \
+                   shutil.which("chromium-driver") or \
+                   "/usr/bin/chromedriver"
+    
+    service = Service(executable_path=chromedriver)
+    driver = webdriver.Chrome(service=service, options=options)
 
     try:
         driver.get(BASE_URL)
 
-        # Find the input and type a sentence
-        text_input = WebDriverWait(driver, 10).until(
+        text_input = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.ID, "text-input"))
         )
-        text_input.send_keys("The cinematography was breathtaking and the performances were outstanding")
+        text_input.clear()
+        text_input.send_keys(
+            "The cinematography was breathtaking "
+            "and the performances were outstanding"
+        )
 
-        # Click the submit button
-        submit_btn = driver.find_element(By.ID, "submit-btn")
+        submit_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "submit-btn"))
+        )
         submit_btn.click()
 
-        # Wait for result and assert it is non-empty and contains expected text
-        result_output = WebDriverWait(driver, 15).until(
-            EC.text_to_be_present_in_element((By.ID, "result-output"), "")
+        WebDriverWait(driver, 15).until(
+            lambda d: len(d.find_element(
+                By.ID, "result-output").text.strip()) > 0
         )
 
         result_text = driver.find_element(By.ID, "result-output").text
         assert len(result_text) > 0
-        assert any(word in result_text for word in ["POSITIVE", "NEGATIVE", "Confidence"])
+        assert any(word in result_text for word in
+                   ["POSITIVE", "NEGATIVE", "Confidence"])
 
     finally:
         driver.quit()
