@@ -7,24 +7,23 @@ pipeline {
                 sh '''
                     export KUBECONFIG=/var/lib/jenkins/.kube/config
 
+                    # Scale green back up first
+                    kubectl scale deployment sentiment-green-deployment --replicas=2
+                    sleep 10
+
+                    # Wait for green pods ready
+                    kubectl rollout status deployment/sentiment-green-deployment --timeout=60s
+
                     # Patch service to green
                     kubectl patch service sentiment-api-service \
                         -p '{"spec":{"selector":{"app":"sentiment-api","slot":"green"}}}'
 
                     echo "Traffic switched to stable green slot"
-                    kubectl get service sentiment-api-service -o jsonpath='{.spec.selector}'
+                    kubectl get service sentiment-api-service \
+                        -o jsonpath='{.spec.selector}'
 
-                    # Kill old port-forward
-                    sudo pkill -f "kubectl port-forward" || true
-                    sleep 3
-
-                    # Start fresh port-forward in background
-                    nohup kubectl port-forward \
-                        --address 0.0.0.0 \
-                        svc/sentiment-api-service \
-                        32500:5000 \
-                        > /tmp/portforward.log 2>&1 &
-
+                    # Restart port-forward
+                    sudo /home/ubuntu/portforward-manager.sh
                     sleep 5
                     echo "Port-forward restarted"
                 '''
@@ -35,9 +34,6 @@ pipeline {
     post {
         success {
             echo "Self-healing complete — stable-v0-8639 is now serving traffic"
-        }
-        failure {
-            echo "Rollback failed — check kubectl access"
         }
     }
 }
