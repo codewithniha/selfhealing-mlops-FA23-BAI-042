@@ -1,17 +1,14 @@
 FROM python:3.10-slim
-
 WORKDIR /app
 
-# Install dependencies first (cached layer - only rebuilds if requirements.txt changes)
+# Install CPU-only torch FIRST so pip sees 2.3.0 already satisfied
+# and skips the massive CUDA download when requirements.txt is installed
+RUN pip install --no-cache-dir torch==2.3.0 --index-url https://download.pytorch.org/whl/cpu
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app code separately (this layer rebuilds on code changes only)
-COPY app.py .
-COPY templates/ templates/
-
+COPY . .
 RUN mkdir -p /app/logs
-
 EXPOSE 5000
-
 CMD ["python", "app.py"]
