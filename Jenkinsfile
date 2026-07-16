@@ -8,7 +8,7 @@ pipeline {
         TEST_CONTAINER   = 'sentiment-test-container'
         APP_PORT         = '5000'
         // Public EC2 IP used by the UI test to hit the live NodePort service
-        EC2_PUBLIC_IP    = '44.201.95.248'
+        EC2_PUBLIC_IP    = '44.220.57.88'
     }
 
     stages {
