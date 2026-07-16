@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import shutil
 
 # Use EC2 public IP so Chrome container can reach the app
-BASE_URL = os.environ.get("BASE_URL", "http://32.198.95.64:32500")
+BASE_URL = os.environ.get("BASE_URL", "http://44.201.95.248:32500")
 
 def test_frontend_sentiment():
     options = Options()
